@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anti-Doom-Scroll Wireframes</title>
+<style>
+  :root { --bg:#f4f4f6; --card:#fff; --ink:#1b1b1f; --muted:#5f5f6b; --line:#d6d6de; --accent:#3d5afe; --warn:#b3261e; --phone:#fff; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#121214; --card:#1e1e22; --ink:#ececf1; --muted:#a3a3b0; --line:#34343c; --accent:#8c9eff; --warn:#f2b8b5; --phone:#18181b; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.4 system-ui, sans-serif; padding:24px 16px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .note { color:var(--muted); margin:0 0 20px; font-size:13px; }
+  .grid { display:flex; flex-wrap:wrap; gap:20px; }
+  figure { margin:0; }
+  figcaption { font-size:12px; color:var(--muted); margin-top:6px; max-width:260px; }
+  .phone { width:260px; min-height:500px; background:var(--phone); border:2px solid var(--line); border-radius:24px; padding:16px 14px; display:flex; flex-direction:column; gap:12px; position:relative; overflow:hidden; }
+  .bar { font-size:11px; color:var(--muted); display:flex; justify-content:space-between; padding-right:64px; }
+  .title { font-weight:600; font-size:17px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; }
+  .state { font-weight:600; display:flex; gap:6px; align-items:center; }
+  .big { font-size:34px; font-weight:600; font-variant-numeric:tabular-nums; margin:6px 0 2px; }
+  .sub { color:var(--muted); font-size:13px; }
+  .btn { display:block; text-align:center; background:var(--accent); color:#fff; border-radius:20px; padding:10px; font-weight:600; font-size:14px; }
+  .btn.ghost { background:transparent; color:var(--accent); border:1px solid var(--line); }
+  .row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .warn { color:var(--warn); }
+  .progress { height:6px; background:var(--line); border-radius:3px; margin:8px 0 4px; }
+  .progress > span { display:block; height:100%; width:20%; background:var(--accent); border-radius:3px; }
+  .stepper { display:flex; align-items:center; gap:8px; }
+  .stepper b { min-width:52px; text-align:center; border:1px solid var(--line); border-radius:8px; padding:4px; }
+  .circle { width:30px; height:30px; border-radius:50%; border:1px solid var(--line); display:grid; place-items:center; }
+  .banner { background:color-mix(in srgb, var(--accent) 14%, transparent); border-radius:12px; padding:10px; font-size:13px; }
+  .pending { font-size:12px; color:var(--accent); }
+  .ig { background:#000; color:#fff; border-color:#333; }
+  .ig .reel { flex:1; border-radius:12px; background:linear-gradient(160deg,#333,#111); display:grid; place-items:center; color:#888; font-size:13px; }
+  .toast { position:absolute; left:50%; transform:translateX(-50%); bottom:70px; background:#323232; color:#fff; font-size:12px; border-radius:16px; padding:8px 12px; width:max-content; max-width:220px; text-align:center; }
+  .overlay { position:absolute; left:12px; right:12px; bottom:16px; background:#fff; color:#1b1b1f; border-radius:16px; padding:12px; box-shadow:0 4px 16px rgba(0,0,0,.5); }
+  .feed { flex:1; display:flex; flex-direction:column; gap:8px; }
+  .post { height:110px; border-radius:10px; background:#222; }
+  ol { margin:0; padding-left:18px; font-size:13px; }
+  .sim { position:absolute; top:8px; right:12px; font-size:10px; color:var(--muted); border:1px dashed var(--line); border-radius:6px; padding:1px 5px; }
+  .ig .sim { color:#aaa; border-color:#555; }
+</style>
+</head>
+<body>
+<h1>Anti-Doom-Scroll — low-fidelity wireframes</h1>
+<p class="note">Simulated data. Layout and copy only; not production UI. Reflects owner decisions D-01 to D-04 (2026-10-08). See interaction-design.md.</p>
+
+<div class="grid">
+
+  <figure>
+    <div class="phone"><span class="sim">simulated</span>
+      <div class="bar"><span>14:08</span><span>J1 · step 2</span></div>
+      <div class="title">Why accessibility?</div>
+      <p class="sub" style="font-size:14px;color:var(--ink)">To spot when Reels is open, this app reads which Instagram screen is showing.</p>
+      <p class="sub">It reads nothing else. Nothing leaves your phone — the app has no internet access.</p>
+      <div style="flex:1"></div>
+      <span class="btn">Continue</span>
+    </div>
+    <figcaption>J1 step 2 — disclosure before any permission (R-12, R-13).</figcaption>
+  </figure>
+
+  <figure>
+    <div class="phone"><span class="sim">simulated</span>
+      <div class="bar"><span>14:09</span><span>J1 · step 4</span></div>
+      <div class="title">Turn on access</div>
+      <p class="sub">Accessibility → Installed apps → Anti-Doom-Scroll → On.</p>
+      <p class="sub warn" role="alert">Access is still off. Try again.</p>
+      <div style="flex:1"></div>
+      <span class="btn">Open Accessibility settings</span>
+    </div>
+    <figcaption>J1 step 4 — shown after returning with access still off (recovery).</figcaption>
+  </figure>
+
+  <figure>
+    <div class="phone"><span class="sim">simulated</span>
+      <div class="bar"><span>14:10</span><span>Main</span></div>
+      <div class="title">Anti-Doom-Scroll</div>
+      <div class="card">
+        <div class="state warn">⚠ Not protecting</div>
+        <p class="sub">Accessibility access is off. Reels is not limited.</p>
+        <span class="btn">Turn on</span>
+      </div>
+      <div class="row"><span>Today: 0 min · 0 sessions</span><span>›</span></div>
+      <div class="row"><span>Settings</span><span>›</span></div>
+    </div>
+    <figcaption>Main · NotProtecting (J6, E-02).</figcaption>
+  </figure>
+
+  <figure>
+    <div class="phone"><span class="sim">simulated</span>
+      <div class="bar"><span>13:55</span><span>Main</span></div>
+      <div class="title">Anti-Doom-Scroll</div>
+      <div class="card">
+        <div class="state">▶ Reels available</div>
+        <p class="sub">Opening Reels starts a 30-min session.</p>
+      </div>
+      <div class="row"><span>Today: 0 min · 0 sessions</span><span>›</span></div>
+      <div class="row"><span>Settings</span><span>›</span></div>
+    </div>
+    <figcaption>Main · Idle.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="phone"><span class="sim">simulated</span>
+      <div class="bar"><span>14:08</span><span>Main</span></div>
+      <div class="title">Anti-Doom-Scroll</div>
+      <div class="card">
+        <div class="state">⏱ Session running</div>
+        <div class="big">24:13</div>
+        <div class="progress"><span></span></div>
+        <p class="sub">Ends at 14:32</p>
+      </div>
+      <div class="row"><span>Today: 6 min · 1 session</span><span>›</span></div>
+      <div class="row"><span>Settings</span><span>›</span></div>
+    </div>
+    <figcaption>Main · InSession (R-11). No pause button by design (N-05).</figcaption>
+  </figure>
+
+  <figure>
+    <div class="phone"><span class="sim">simulated</span>
+      <div class="bar"><span>14:57</span><span>Main</span></div>
+      <div class="title">Anti-Doom-Scroll</div>
+      <div class="card">
+        <div class="state">🔒 Reels locked</div>
+        <div class="big">1:12:40</div>
+        <p class="sub">Back at 16:10</p>
+      </div>
+      <div class="row"><span>Today: 42 min · 2 sessions</span><span>›</span></div>
+      <div class="row"><span>Settings</span><span>›</span></div>
+    </div>
+    <figcaption>Main · Cooldown.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="phone"><span class="sim">simulated</span>
+      <div class="bar"><span>14:58</span><span>Settings</span></div>
+      <div class="title">‹ Settings</div>
+      <div class="banner">🔒 Locked until the cooldown ends at 16:10. Changes will apply then.</div>
+      <div class="row"><span>Session length</span><span class="stepper"><span class="circle">−</span><b>20</b><span class="circle">+</span></span></div>
+      <div class="pending">Pending: 20 min (now 30)</div>
+      <div class="row"><span>Cooldown</span><span class="stepper"><span class="circle">−</span><b>90</b><span class="circle">+</span></span></div>
+      <p class="sub">Minutes, 1–180.</p>
+      <div style="flex:1"></div>
+      <span class="btn">Save</span>
+    </div>
+    <figcaption>J5 Settings during Cooldown (R-14, D-03).</figcaption>
+  </figure>
+
+  <figure>
+    <div class="phone"><span class="sim">simulated</span>
+      <div class="bar"><span>15:00</span><span>Today</span></div>
+      <div class="title">‹ Today</div>
+      <div class="row"><span>14:02 – 14:32</span><span>30 min</span></div>
+      <div class="row"><span>09:15 – 09:27</span><span>12 min</span></div>
+      <p class="sub">Total: 42 min of Reels</p>
+    </div>
+    <figcaption>J4 Today log (R-09, N-06). Empty state: “No Reels today.”</figcaption>
+  </figure>
+
+  <figure>
+    <div class="phone ig"><span class="sim">simulated</span>
+      <div class="bar" style="color:#aaa"><span>14:30</span><span>Instagram · Reels</span></div>
+      <div class="reel">reel playing</div>
+      <div class="toast">2 min left in this Reels session</div>
+    </div>
+    <figcaption>J2 step 3 — warning toast at X − 2 min (R-07, D-04).</figcaption>
+  </figure>
+
+  <figure>
+    <div class="phone ig"><span class="sim">simulated</span>
+      <div class="bar" style="color:#aaa"><span>14:32</span><span>Instagram · Home</span></div>
+      <div class="feed"><div class="post"></div><div class="post"></div><div class="post"></div></div>
+      <div class="overlay"><b>Session over</b><div style="font-size:13px;color:#5f5f6b">Reels is back at 16:10.</div></div>
+    </div>
+    <figcaption>J2 step 5 — exited to feed; session-over card, 4 s (R-04, N-03).</figcaption>
+  </figure>
+
+  <figure>
+    <div class="phone ig"><span class="sim">simulated</span>
+      <div class="bar" style="color:#aaa"><span>14:58</span><span>Instagram · Home</span></div>
+      <div class="feed"><div class="post"></div><div class="post"></div><div class="post"></div></div>
+      <div class="toast">Reels locked · back at 16:10 (1 h 12 m)</div>
+    </div>
+    <figcaption>J3 — Reels attempt during Cooldown, exited within 1 s (R-05, N-01).</figcaption>
+  </figure>
+
+</div>
+</body>
+</html>
