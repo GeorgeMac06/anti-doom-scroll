@@ -10,11 +10,13 @@ import android.graphics.PixelFormat;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.ContextThemeWrapper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -29,6 +31,7 @@ public class GuardService extends AccessibilityService {
     private static final long TOAST_GAP_MS = 10_000;
     private static final long WARN_BEFORE_MS = 2 * 60_000;
     private static final long CARD_MS = 4_000;
+    private static final long PROMPT_MS = 10_000;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private Store store;
@@ -83,9 +86,7 @@ public class GuardService extends AccessibilityService {
             return;
         }
         SessionPolicy policy = store.policy();
-        boolean wasIdle = policy.state(now) == SessionPolicy.State.IDLE;
-        if (policy.onReelsView(now, store.limitX(), store.limitY())) {
-            if (wasIdle) store.save(policy);
+        if (policy.allowsReels(now)) {
             exitAttempts = 0;
             setWatching(true, now);
             scheduleTimers(policy, now);
@@ -149,7 +150,7 @@ public class GuardService extends AccessibilityService {
         long now = System.currentTimeMillis();
         if (watchingSince != 0) {
             setWatching(false, now);
-            showCard(store.policy());
+            showSessionOver(store.policy());
             lastToastAt = now; // The card replaces the lock toast.
         }
         handler.removeCallbacks(evaluate);
@@ -163,7 +164,10 @@ public class GuardService extends AccessibilityService {
             scheduleEvaluate(RETRY_MS - sinceExit);
             return;
         }
-        if (now - lastToastAt >= TOAST_GAP_MS) { // N-01
+        boolean idle = policy.state(now) == SessionPolicy.State.IDLE;
+        if (idle) {
+            if (card == null) showStartPrompt();
+        } else if (now - lastToastAt >= TOAST_GAP_MS) { // N-01
             lastToastAt = now;
             Toast.makeText(this, "Reels locked · back at " + Ui.clock(this, policy.cooldownEnd())
                     + " (" + Ui.duration(policy.cooldownEnd() - now) + ")", Toast.LENGTH_SHORT).show();
@@ -191,11 +195,37 @@ public class GuardService extends AccessibilityService {
         }
     }
 
-    /** N-03: "Session over" card at the bottom of the screen; falls back to a long toast (spec §4.2). */
-    private void showCard(SessionPolicy policy) {
-        hideCard();
+    /** N-03: "Session over" card. */
+    private void showSessionOver(SessionPolicy policy) {
         String body = "Reels is back at " + Ui.clock(this, policy.cooldownEnd()) + ".";
+        if (!showCard("Session over", body, CARD_MS)) {
+            Toast.makeText(this, "Session over. " + body, Toast.LENGTH_LONG).show(); // Spec §4.2 fallback.
+        }
+    }
 
+    /** R-16: Reels was opened while Idle; a session starts only on an explicit Start. */
+    private void showStartPrompt() {
+        int x = store.limitX();
+        Context themed = new ContextThemeWrapper(this, android.R.style.Theme_DeviceDefault_Light);
+        Button notNow = new Button(themed, null, android.R.attr.borderlessButtonStyle);
+        notNow.setText("Not now");
+        notNow.setOnClickListener(v -> hideCard());
+        Button start = new Button(themed);
+        start.setText("Start");
+        start.setOnClickListener(v -> {
+            hideCard();
+            SessionPolicy policy = store.policy();
+            if (policy.start(System.currentTimeMillis(), x, store.limitY())) store.save(policy);
+            Toast.makeText(this, "Session started. Open Reels again.", Toast.LENGTH_SHORT).show();
+        });
+        if (!showCard("Start a " + x + "-min Reels session?", "Then open Reels again.", PROMPT_MS, notNow, start)) {
+            Toast.makeText(this, "Open Anti-Doom-Scroll to start a Reels session.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** Shows a white card at the bottom of the screen over Instagram. Returns false if the overlay failed. */
+    private boolean showCard(String heading, String body, long hideAfterMs, Button... actions) {
+        hideCard();
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
         int pad = Ui.dp(this, 16);
@@ -206,7 +236,7 @@ public class GuardService extends AccessibilityService {
         box.setBackground(background);
         box.setElevation(Ui.dp(this, 6));
         TextView title = new TextView(this);
-        title.setText("Session over");
+        title.setText(heading);
         title.setTextColor(0xFF1B1B1F);
         title.setTextSize(16);
         title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
@@ -216,6 +246,15 @@ public class GuardService extends AccessibilityService {
         text.setTextSize(14);
         box.addView(title);
         box.addView(text);
+        if (actions.length > 0) {
+            LinearLayout buttons = new LinearLayout(this);
+            buttons.setGravity(Gravity.END);
+            for (Button b : actions) {
+                b.setMinHeight(Ui.dp(this, 48));
+                buttons.addView(b);
+            }
+            box.addView(buttons);
+        }
 
         FrameLayout wrap = new FrameLayout(this);
         wrap.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), Ui.dp(this, 32));
@@ -231,9 +270,10 @@ public class GuardService extends AccessibilityService {
         try {
             getSystemService(WindowManager.class).addView(wrap, params);
             card = wrap;
-            handler.postDelayed(hideCard, CARD_MS);
+            handler.postDelayed(hideCard, hideAfterMs);
+            return true;
         } catch (RuntimeException e) {
-            Toast.makeText(this, "Session over. " + body, Toast.LENGTH_LONG).show();
+            return false;
         }
     }
 

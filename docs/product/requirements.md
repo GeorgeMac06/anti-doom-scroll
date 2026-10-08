@@ -43,19 +43,19 @@ The app must not block or change these.
 |---|---|
 | **Reels view** | Any screen in Instagram showing the full-screen vertical Reels player. Covers the Reels tab, a reel opened from the feed, and a reel opened from a profile. Excludes a **DM reel**. |
 | **DM reel** | The single reel a person sent you, opened from a DM thread. It is always allowed (D-02). Swiping from it to further reels creates a normal Reels view. |
-| **Session** | A period of allowed Reels viewing. It starts on the first Reels view while the app is Idle. |
+| **Session** | A period of allowed Reels viewing. It starts only when the user taps **Start** on the start prompt (R-16). |
 | **X (session limit)** | Maximum session length. Default 30 min. |
 | **Y (cooldown)** | Period after a session ends when Reels is blocked. Default 90 min. |
 
 ### States
 
 ```
-Idle ──(enter Reels)──▶ InSession ──(X elapsed)──▶ Cooldown ──(Y elapsed)──▶ Idle
+Idle ──(enter Reels → prompt → Start)──▶ InSession ──(X elapsed)──▶ Cooldown ──(Y elapsed)──▶ Idle
 ```
 
 | State | Reels allowed? |
 |---|---|
-| Idle | Yes. Entering Reels starts a session. |
+| Idle | No, not yet. Entering Reels exits it and shows the start prompt (R-16). |
 | InSession | Yes, until X has elapsed. |
 | Cooldown | No. Every Reels view is exited immediately. |
 
@@ -64,7 +64,7 @@ Idle ──(enter Reels)──▶ InSession ──(X elapsed)──▶ Cooldown 
 | ID | Requirement | Status |
 |---|---|---|
 | R-01 | Detect when the user is on a Reels view in the Instagram app. | Proposed |
-| R-02 | In Idle, entering a Reels view starts a session and switches to InSession. | Proposed |
+| R-02 | ~~In Idle, entering a Reels view starts a session and switches to InSession.~~ | Superseded by R-16 (D-05, 2026-10-09) |
 | R-03 | In InSession, Reels stays usable until the session reaches X. Elapsed time is counted per D-01. | Proposed |
 | R-04 | When the session reaches X, exit the Reels view and switch to Cooldown. | Proposed |
 | R-05 | In Cooldown, any Reels view is exited within 1 second of appearing. A short message shows the time until Reels unlocks. | Proposed |
@@ -78,6 +78,7 @@ Idle ──(enter Reels)──▶ InSession ──(X elapsed)──▶ Cooldown 
 | R-13 | All data stays on the device. The app sends nothing off the device and needs no internet permission. | Proposed |
 | R-14 | Changes to X or Y made during Cooldown take effect only after the cooldown ends (D-03). | Proposed (D-03 accepted) |
 | R-15 | A DM reel is always allowed, in every state. It does not start a session. Swiping on from it to another reel is a normal Reels view: it starts a session in Idle and is exited in Cooldown (D-02). | Proposed (D-02 accepted) |
+| R-16 | In Idle, entering a Reels view exits it and shows a start prompt: "Start a X-min Reels session?" with **Start** and **Not now**. Only **Start** starts a session. **Not now**, tapping the card, or 10 s without an answer closes it with no session started. The main screen also offers **Start session** while Idle, as a fallback if the prompt cannot be shown. | Accepted (D-05) |
 
 ### Failure and edge behavior
 
@@ -96,8 +97,10 @@ Test with X and Y set to short values (e.g. X = 2 min, Y = 3 min) on the owner's
 
 | ID | Given | When | Then |
 |---|---|---|---|
-| AC-01 (R-01, R-02) | Idle | Open the Reels tab | The app shows InSession with a countdown starting at X. |
-| AC-02 (R-01) | Idle | Open a reel from the home feed, and separately from a profile | Each one starts a session. |
+| AC-01 (R-01, R-16) | Idle | Open the Reels tab | Reels is exited and the start prompt shows. The state stays Idle. |
+| AC-01b (R-16) | Start prompt showing | Tap **Start**, then open Reels | Reels plays and the app shows InSession with a countdown starting at X. |
+| AC-01c (R-16) | Start prompt showing | Tap **Not now**, or wait 10 s | The prompt closes, no session starts, and nothing is logged. |
+| AC-02 (R-01, R-16) | Idle | Open a reel from the home feed, and separately from a profile | Each one is exited and shows the start prompt. |
 | AC-03 (protected) | Any state | Use the feed, Stories, DMs, profile, search | Nothing is exited or blocked. |
 | AC-04 (R-04) | InSession | Keep watching until X | Reels is exited and the state shows Cooldown with Y remaining. |
 | AC-05 (R-05) | Cooldown | Open Reels from the tab, the feed and a profile | Each is exited within 1 s, and a message shows the time until unlock. |
@@ -130,6 +133,7 @@ Functional acceptance (section 5) only shows that the app works. It does not sho
 | D-02 | Are reels opened from a DM limited? | **(b) No.** A DM reel is always allowed (R-15). Swiping on to further reels counts as a normal Reels view. |
 | D-03 | Can settings be changed during Cooldown? | **(b)** Yes, but changes apply only after the cooldown ends (R-14). |
 | D-04 | Warning before the session ends (R-07)? | **Yes**, 2 min before. |
+| D-05 | Should an accidental tap on Reels start a session? (raised 2026-10-09 after a day of use) | **No.** Opening Reels while Idle shows a start prompt; only **Start** begins a session (R-16). A grace period and pause-on-leave were rejected: the first allows unlimited sub-60 s viewing, the second turns an accidental tap into a cooldown. |
 
 ## 8. Assumptions and dependencies
 

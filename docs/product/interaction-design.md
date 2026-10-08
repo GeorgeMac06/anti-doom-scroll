@@ -25,7 +25,8 @@ Each spot that depends on a decision is tagged `[D-0x]`.
 stateDiagram-v2
     [*] --> NotProtecting: accessibility off
     NotProtecting --> Idle: user enables accessibility
-    Idle --> InSession: Reels view appears
+    Idle --> Idle: Reels view appears → exit Reels + start prompt
+    Idle --> InSession: Start tapped
     InSession --> InSession: X − 2 min → warning toast [D-04]
     InSession --> Cooldown: X elapsed → exit Reels + "Session over" card
     Cooldown --> Cooldown: Reels view appears → exit Reels + lock toast
@@ -54,8 +55,10 @@ Text version: NotProtecting means the service is off, so nothing is enforced. Id
 
 ### J2. Watch Reels in a session (R-01–R-04, R-07)
 
-1. **Entry:** the user opens Reels in Instagram while Idle, from the tab, the feed or a profile. A DM reel does not start a session (J7) `[D-02]`.
-2. **Session starts silently.** Reels plays normally with no overlay, which keeps watching undisturbed.
+1. **Entry:** the user opens Reels in Instagram while Idle, from the tab, the feed or a profile. A DM reel never needs a session (J7) `[D-02]`.
+2. **Start prompt** `[D-05]`: Reels is exited (same exit behavior as J3) and a card shows at the bottom: "Start a 30-min Reels session?" / "Then open Reels again." with **Not now** and **Start**.
+   - **Not now**, tapping the card, or 10 s without an answer: the card closes and nothing is counted. This turns an autopilot tap into a free choice.
+   - **Start**: the session begins, a Toast says "Session started. Open Reels again.", and the next Reels view plays normally with no overlay.
 3. **At X − 2 min `[D-04]`:** a Toast shows "2 min left in this Reels session." (long duration, once).
 4. **Leaving and returning** (e.g. checking DMs): the timer keeps running `[D-01]`. No feedback.
 5. **At X:** the service exits Reels and shows the **Session-over card** (overlay, see §4.2) for 4 s. The state is now Cooldown.
@@ -128,7 +131,7 @@ Text version: NotProtecting means the service is off, so nothing is enforced. Id
 | State | Icon + title (never color alone) | Big value | Sub-text | Action |
 |---|---|---|---|---|
 | NotProtecting | ⚠ **Not protecting** | — | "Accessibility access is off. Reels is not limited." | **Turn on** (filled button) |
-| Idle | ▶ **Reels available** | — | "Opening Reels starts a 30-min session." | — |
+| Idle | ▶ **Reels available** | — | "Opening Reels asks before starting a 30-min session." | **Start session** (fallback for R-16) |
 | InSession | ⏱ **Session running** | `24:13` left | Progress bar · "Ends at 14:32" | — |
 | Cooldown | 🔒 **Reels locked** | `1:12:40` | "Back at 16:10" | — |
 

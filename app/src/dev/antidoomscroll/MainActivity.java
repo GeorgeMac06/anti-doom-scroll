@@ -23,6 +23,7 @@ public class MainActivity extends Activity {
     private ProgressBar progress;
     private TextView sub;
     private Button turnOn;
+    private Button start;
     private TextView today;
 
     private final Runnable tick = new Runnable() {
@@ -59,7 +60,14 @@ public class MainActivity extends Activity {
         card.addView(value);
         card.addView(progress, Ui.spaced(this, 4));
         card.addView(sub, Ui.spaced(this, 4));
+        // Also the fallback if the in-Instagram start prompt can't be shown (R-16).
+        start = Ui.button(this, "Start session", v -> {
+            SessionPolicy policy = store.policy();
+            if (policy.start(System.currentTimeMillis(), store.limitX(), store.limitY())) store.save(policy);
+            render();
+        });
         card.addView(turnOn, Ui.spaced(this, 12));
+        card.addView(start, Ui.spaced(this, 12));
         content.addView(card);
 
         today = Ui.row(this, "", v -> startActivity(new Intent(this, TodayActivity.class)));
@@ -116,7 +124,7 @@ public class MainActivity extends Activity {
                 }
                 default:
                     t = "▶ Reels available";
-                    s = "Opening Reels starts a " + store.limitX() + "-min session.";
+                    s = "Opening Reels asks before starting a " + store.limitX() + "-min session.";
                     spoken = "Reels available. " + s;
             }
         }
@@ -125,6 +133,7 @@ public class MainActivity extends Activity {
         value.setVisibility(v.isEmpty() ? View.GONE : View.VISIBLE);
         setIfChanged(sub, s);
         turnOn.setVisibility(enabled ? View.GONE : View.VISIBLE);
+        start.setVisibility(enabled && policy.state(now) == SessionPolicy.State.IDLE ? View.VISIBLE : View.GONE);
         card.setContentDescription(spoken);
 
         List<long[]> sessions = store.sessionsSince(Ui.startOfToday());

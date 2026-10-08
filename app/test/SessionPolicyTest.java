@@ -11,9 +11,9 @@ public class SessionPolicyTest {
     private static int failures;
 
     public static void main(String[] args) {
-        firstReelsViewStartsSession();
+        reelsNeedAnExplicitStart();
         sessionEndsIntoCooldownThenIdle();
-        laterReelsViewsDoNotExtendSession();
+        startIsIgnoredDuringSessionOrCooldown();
         changesDuringCooldownApplyToNextSession();
         minuteBounds();
         if (failures > 0) {
@@ -23,41 +23,41 @@ public class SessionPolicyTest {
         System.out.println("SessionPolicyTest: all passed");
     }
 
-    // AC-01: Idle, then opening Reels starts a session lasting X.
-    private static void firstReelsViewStartsSession() {
+    // R-16, AC-01: Idle blocks Reels until Start; an accidental tap costs nothing.
+    private static void reelsNeedAnExplicitStart() {
         SessionPolicy p = new SessionPolicy(0, 30, 90);
         check(p.state(T0) == State.IDLE, "starts Idle");
-        check(p.onReelsView(T0, 30, 90), "first Reels view allowed");
-        check(p.state(T0) == State.IN_SESSION, "session running after first view");
+        check(!p.allowsReels(T0), "Idle does not allow Reels");
+        check(p.state(T0 + 5 * MIN) == State.IDLE, "an unanswered prompt leaves it Idle");
+        check(p.start(T0, 30, 90), "Start starts a session");
+        check(p.allowsReels(T0), "Reels allowed after Start");
         check(p.sessionEnd() == T0 + 30 * MIN, "session lasts X");
     }
 
-    // AC-04, AC-05, AC-06: Reels blocked from X until X+Y, then a new session can start.
+    // AC-04, AC-05, AC-06: Reels blocked from X until X+Y, then Idle again.
     private static void sessionEndsIntoCooldownThenIdle() {
         SessionPolicy p = new SessionPolicy(T0, 30, 90);
-        check(p.onReelsView(T0 + 30 * MIN - 1, 30, 90), "allowed just before X");
+        check(p.allowsReels(T0 + 30 * MIN - 1), "allowed just before X");
         check(p.state(T0 + 30 * MIN) == State.COOLDOWN, "Cooldown at X");
-        check(!p.onReelsView(T0 + 30 * MIN, 30, 90), "blocked at X");
-        check(!p.onReelsView(T0 + 120 * MIN - 1, 30, 90), "blocked just before X+Y");
+        check(!p.allowsReels(T0 + 30 * MIN), "blocked at X");
+        check(!p.allowsReels(T0 + 120 * MIN - 1), "blocked just before X+Y");
         check(p.state(T0 + 120 * MIN) == State.IDLE, "Idle at X+Y");
-        check(p.onReelsView(T0 + 120 * MIN, 30, 90), "new session allowed at X+Y");
-        check(p.sessionStart == T0 + 120 * MIN, "new session starts at X+Y");
     }
 
-    // D-01: wall-clock session; returning to Reels mid-session must not restart the timer.
-    private static void laterReelsViewsDoNotExtendSession() {
+    // D-01, D-03: a running session or cooldown cannot be restarted or skipped.
+    private static void startIsIgnoredDuringSessionOrCooldown() {
         SessionPolicy p = new SessionPolicy(T0, 30, 90);
-        check(p.onReelsView(T0 + 20 * MIN, 30, 90), "allowed mid-session");
-        check(p.sessionStart == T0, "mid-session view keeps the original start");
-        check(p.state(T0 + 30 * MIN) == State.COOLDOWN, "session still ends at the original X");
+        check(!p.start(T0 + 20 * MIN, 30, 90), "Start ignored mid-session");
+        check(p.sessionStart == T0, "mid-session Start keeps the original start");
+        check(!p.start(T0 + 40 * MIN, 30, 90), "Start ignored during Cooldown");
+        check(p.cooldownEnd() == T0 + 120 * MIN, "Cooldown keeps its end time");
     }
 
     // AC-08, AC-12, D-03: new limits wait for the cooldown to end, then apply to the next session.
     private static void changesDuringCooldownApplyToNextSession() {
         SessionPolicy p = new SessionPolicy(T0, 30, 90);
-        check(!p.onReelsView(T0 + 40 * MIN, 10, 1), "still blocked after Y is lowered");
-        check(p.cooldownEnd() == T0 + 120 * MIN, "current cooldown keeps its end time");
-        check(p.onReelsView(T0 + 120 * MIN, 10, 1), "next session allowed");
+        check(!p.start(T0 + 40 * MIN, 10, 1), "lowered limits do not end the cooldown");
+        check(p.start(T0 + 120 * MIN, 10, 1), "next session can start");
         check(p.sessionEnd() == T0 + 130 * MIN, "next session uses the new X");
         check(p.cooldownEnd() == T0 + 131 * MIN, "next session uses the new Y");
     }

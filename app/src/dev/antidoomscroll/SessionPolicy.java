@@ -39,19 +39,18 @@ public final class SessionPolicy {
         return now < sessionEnd() ? State.IN_SESSION : State.COOLDOWN;
     }
 
-    /**
-     * Call when a limited Reels view is on screen. Starts a session with limits x and y when Idle.
-     * Returns whether Reels may stay on screen.
-     */
-    public boolean onReelsView(long now, int x, int y) {
-        State state = state(now);
-        if (state == State.IDLE) {
-            sessionStart = now;
-            sessionX = x;
-            sessionY = y;
-            return true;
-        }
-        return state == State.IN_SESSION;
+    /** Reels may stay on screen only during a session; Idle asks first (R-16). */
+    public boolean allowsReels(long now) {
+        return state(now) == State.IN_SESSION;
+    }
+
+    /** Starts a session with limits x and y when the user taps Start (R-16). Ignored unless Idle. */
+    public boolean start(long now, int x, int y) {
+        if (state(now) != State.IDLE) return false;
+        sessionStart = now;
+        sessionX = x;
+        sessionY = y;
+        return true;
     }
 
     public static boolean isValidMinutes(int minutes) {
